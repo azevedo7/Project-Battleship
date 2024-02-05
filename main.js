@@ -1,4 +1,3 @@
-const { moduleExpression } = require("@babel/types");
 
 class Ship{
     constructor(length){
@@ -27,20 +26,21 @@ class Ship{
     place(coordinate, direction){
         this.startCoordinate = coordinate;
         this.direction = direction;
-        this.calcCoordinates();
+        this.coordinates = this.calcCoordinates(coordinate, direction);
     }
 
-    calcCoordinates(){
-        this.coordinates = [];
-        let x = this.startCoordinate[0];
-        let y = this.startCoordinate[1];
+    calcCoordinates(start, direction){
+        let coordinates = [];
+        let x = start[0];
+        let y = start[1];
         for(let i = 0; i < this.length; i++){
-            if(this.direction == 0){
-                this.coordinates.push([x+i, y])
+            if(direction == 0){
+                coordinates.push([x+i, y])
             } else {
-                this.coordinates.push([x, y+i])
+                coordinates.push([x, y+i])
             }
         }
+        return coordinates;
     }
 }
 
@@ -93,7 +93,29 @@ class Gameboard{
             return; // Do nothing if ship placement is out of bounds
         }
 
+        let newCoordinates = ship.calcCoordinates(coordinate, direction);
+
+        // Check for overlap with existing ships
+
+        for (const existingShipName in this.ships) {
+            if (existingShipName !== name) {
+                const existingShip = this.ships[existingShipName];
+                for (const existingCoordinates of existingShip.coordinates) {
+                    for (const coordinates of newCoordinates) {
+                        if (
+                            existingCoordinates[0] === coordinates[0] &&
+                            existingCoordinates[1] === coordinates[1]
+                        ) {
+                            console.error("Invalid ship placement. Ships cannot overlap.");
+                            return; // Do nothing if ships overlap
+                        }
+                    }
+                }
+            }
+        }
+
         ship.place(coordinate, direction);
+        return true
     }
 
     allPlaced() {
@@ -134,11 +156,94 @@ class Gameboard{
     }
 }
 
-let board = new Gameboard();
+class Player{
+    constructor(){
+        this.board = new Gameboard();
+    }
+}
 
-board.placeShip('Carrier', [5,0], 0);
-board.receiveAttack([5,0]);
-board.allPlaced();
+class Bot{
+    constructor(){
+        this.board = new Gameboard();
+        this.populateBoard();
+    }
 
+    getRandomCoordinate() {
+        const x = Math.floor(Math.random() * 10);
+        const y = Math.floor(Math.random() * 10);
+        return [x, y];
+    }
 
-module.exports = Gameboard;
+    getRandomDirection() {
+        return Math.random() < 0.5 ? 0 : 1; // 0 for horizontal, 1 for vertical
+    }
+
+    populateBoard() {
+        for (const shipName in this.board.ships) {
+            let placed = false;
+            while (!placed) {
+                const randomCoordinate = this.getRandomCoordinate();
+                const randomDirection = this.getRandomDirection();
+
+                
+                if(this.board.placeShip(shipName, randomCoordinate, randomDirection) == true){
+                    placed = true;
+                };
+            }
+        }
+    }
+}
+
+function gameLoop(){
+    const player = new Player();
+    const pc = new Bot();
+    let turn = 0;  // 0 - Player 1 - Computer
+    drawBoard(pc.board, 'gameBoard');
+
+    
+
+}
+
+function drawBoard(gameboard, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+  
+    const boardElement = document.createElement('div');
+    boardElement.classList.add('board');
+  
+    for (let i = 0; i < 10; i++) {
+      for (let j = 0; j < 10; j++) {
+        const cellElement = document.createElement('div');
+        cellElement.classList.add('cell');
+
+        // Check for ship on this cell
+        for (const [name, ship] of Object.entries(gameboard.ships)) {
+          if (ship.coordinates.some(([x, y]) => x === j && y === i)) {
+            if (gameboard.board[i][j] === 1) {
+                cellElement.classList.add('hit');
+            }
+            break; // Only mark first ship found (overlapping ships)
+          }
+        }
+  
+        // Display 'X' for hits (optional)
+        if (gameboard.board[i][j] === 1) {
+            cellElement.textContent = 'X';
+          }
+  
+        boardElement.appendChild(cellElement);
+      }
+    }
+  
+    container.appendChild(boardElement);
+  }
+  
+
+// let board = new Gameboard();
+
+// board.placeShip('Carrier', [5,0], 0);
+// board.placeShip('Cruiser', [5,1], 1)
+// board.receiveAttack([5,0]);
+// board.allPlaced();
+
+gameLoop();
