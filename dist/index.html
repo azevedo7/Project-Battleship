@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Webpack Project</title>
+  <style>
+    /* Add your CSS styling for the game board here */
+    .board {
+            display: grid;
+            grid-template-columns: repeat(10, 30px);
+            grid-template-rows: repeat(10, 30px);
+            gap: 2px;
+            border: 1px solid #000;
+        }
+
+        .cell {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #000;
+            box-sizing: border-box;
+        }
+
+        .hit {
+            background-color: red;
+        }
+
+        .ship{
+          background-color: grey;
+        }
+  </style>
+<script defer src="bundle.js"></script></head>
+<body>
+  <div id="app">
+  </div>
+</body>
+</html>
